@@ -3,7 +3,7 @@
 ## Resumen
 Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsoft Azure** para analizar la variabilidad del precio en mercados de futuros de criptomonedas y **detectar “whale trades”** (operaciones de gran volumen) y predecir subidas en la cotización.  
 
-- Procesa y transforma la información en **Azure Databricks** esde **Binance API, OKX API y Bybit API.**
+- Procesa y transforma la información en **Azure Databricks** desde **Binance API, OKX API y Bybit API.**
 - Aplica arquitectura **Medallion (raw, bronze, silver, gold)** para almacenamiento en **Azure Data Lake Storage Gen2**.  
 - Entrena y registra modelos en **MLflow**, integrados con **Unity Catalog**.  
 - Despliega un prototipo en **Azure Container Instances (ACI)** que consume el WebSocket de Binance y realiza predicciones en tiempo real.  
@@ -21,6 +21,7 @@ Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsof
 - **Gobierno**: Unity Catalog para trazabilidad y control de accesos.  
 - **Modelado**: MLflow para experimentos, métricas y registro de modelos.  
 - **Despliegue**: Docker + Azure Container Instances (ACI).  
+![Modelo registrado en Unity Catalog](imagenes/mlflow.jpeg)  
 
 
 ## Resultados clave:  
@@ -32,12 +33,13 @@ Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsof
   - **Operaciones ganadoras (>0)**: 73,2%.  
   - **Señales ≥ 1%**: 49,48%.  
   - **Precisión positiva**: 49,48%.  
-  - **Tiempo medio de predicción**: 6 ms. 
 
 
 ## Cómo Ejecutar
 1. **Ingesta y entrenamiento**: ejecutar pipeline de Data Factory.
+![Azure Data Factory Pipeline](imagenes/datafactory-pipeline-execution.jpeg)  
 2. **Despliegue**: modificar url del modelo del .env y lanzar el contenedoren Azure Container Instances
+![Azure Data Factory Pipeline](imagenes/aci-execution.jpeg)  
 
 
 ## 🔮 Futuras Mejoras
