@@ -19,8 +19,8 @@ Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsof
 - **Ingesta/Orquestación**: Azure Data Factory + Azure Databricks
 - **Procesamiento**: Azure Databricks
 - **Gobierno**: Unity Catalog para trazabilidad y control de accesos.  
-- **Modelado**: MLflow para experimentos, métricas y registro de modelos.  
 - **Despliegue**: Docker + Azure Container Instances (ACI).  
+- **Modelado**: MLflow para experimentos, métricas y registro de modelos.  
 ![Modelo registrado en Unity Catalog](imagenes/mlflow.jpeg)  
 
 
