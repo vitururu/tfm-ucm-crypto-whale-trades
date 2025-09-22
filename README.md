@@ -3,13 +3,11 @@
 ## Resumen
 Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsoft Azure** para analizar la variabilidad del precio en mercados de futuros de criptomonedas y **detectar “whale trades”** (operaciones de gran volumen) y predecir subidas en la cotización.  
 
-El sistema:  
 - Procesa y transforma la información en **Azure Databricks** esde **Binance API, OKX API y Bybit API.**
 - Aplica arquitectura **Medallion (raw, bronze, silver, gold)** para almacenamiento en **Azure Data Lake Storage Gen2**.  
 - Entrena y registra modelos en **MLflow**, integrados con **Unity Catalog**.  
 - Despliega un prototipo en **Azure Container Instances (ACI)** que consume el WebSocket de Binance y realiza predicciones en tiempo real.  
 
----
 
 ## Arquitectura
 ![Diagrama General](imagenes/arquitectura.jpg)  
