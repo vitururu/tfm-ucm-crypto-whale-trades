@@ -1,9 +1,57 @@
-# tfm-ucm-crypto-whale-trades
-Pipeline experimental y escalable para análisis avanzado de grandes operaciones de compra de criptomonedas y predicción de su impacto en la cotización. Desarrollado en Databricks + Docker (Spark, Python). Ingesta por API REST y Websocket, almacenamiento Delta Lake siguiendo la Arquitectura Medallion (raw, bronze, silver, gold)
+# Arquitectura de Análisis y Trading Predictivo en Mercados de Futuros de Criptomonedas
 
-Folders:
-  - exchange_info: contiene el codigo para obtener y procesar la información de las monedas con las que operar en los exchanges binance, okx y bybit.
-  - ETL:calculate_score: contiene el código para el cálculo del score personalizado relativo a la variabilidad de la cotización de una criptomoneda en base a whale trades.
-  - ETL+Train: contiene 5 notebooks para la extraccion y proceso de la informacion necesaria para entrenar el modelo predictivo asi como su entrenamiento
-  - binance_wesocket: contiene las componentes del contenedor desarrollado que ejecuta un codigo python que se descarga el modelo entrenado por el pipeline ETL+Train, conecta con el websocket de binance y realiza predicciones con mínima latencia.
+## Resumen
+Este proyecto implementa un **pipeline de datos de extremo a extremo en Microsoft Azure** para analizar la variabilidad del precio en mercados de futuros de criptomonedas y **detectar “whale trades”** (operaciones de gran volumen) y predecir subidas en la cotización.  
 
+El sistema:  
+- Procesa y transforma la información en **Azure Databricks** esde **Binance API, OKX API y Bybit API.**
+- Aplica arquitectura **Medallion (raw, bronze, silver, gold)** para almacenamiento en **Azure Data Lake Storage Gen2**.  
+- Entrena y registra modelos en **MLflow**, integrados con **Unity Catalog**.  
+- Despliega un prototipo en **Azure Container Instances (ACI)** que consume el WebSocket de Binance y realiza predicciones en tiempo real.  
+
+---
+
+## Arquitectura
+![Diagrama General](imagenes/arquitectura.jpg)  
+
+
+**Componentes principales:** 
+- **Fuentes de datos**: Binance (REST/WebSocket), Bybit y OKX. 
+- **Almacenamiento**: ADLS Gen2 con arquitectura Medallion (raw → bronze → silver → gold). 
+- **Ingesta/Orquestación**: Azure Data Factory + Azure Databricks
+- **Procesamiento**: Azure Databricks
+- **Gobierno**: Unity Catalog para trazabilidad y control de accesos.  
+- **Modelado**: MLflow para experimentos, métricas y registro de modelos.  
+- **Despliegue**: Docker + Azure Container Instances (ACI).  
+
+---
+
+## Resultados clave:  
+  - **Reducción de latencia:** 59% desplegando en región Japan East.  
+  - **Coste de producción optimizado:** 0,89 €/día en ACI.
+  - **Tiempo medio de predicción**: 6 ms.
+  - **Retorno medio por señal**: +0,81%.
+  - **Mediana de retorno (p50)**: +0,93%.  
+  - **Operaciones ganadoras (>0)**: 73,2%.  
+  - **Señales ≥ 1%**: 49,48%.  
+  - **Precisión positiva**: 49,48%.  
+  - **Tiempo medio de predicción**: 6 ms. 
+
+---
+
+## Cómo Ejecutar
+1. **Ingesta y entrenamiento**: ejecutar pipeline de Data Factory.
+2. **Despliegue**: modificar url del modelo del .env y lanzar el contenedoren Azure Container Instances
+
+---
+
+## 🔮 Futuras Mejoras
+- Integrar el despliegue en ACI en el pipeline de Azure Data Factory
+- Generar paquete `.whl` para reutilizar el pipeline.  
+- Implementar borrado/archivado automático de datos antiguos.  
+- Desarrollar paneles en Power BI o notebooks para reporting avanzado.  
+
+---
+
+**Autor:** Víctor Daniel Rodríguez  
+Máster en Big Data & Data Engineering (UCM)  
