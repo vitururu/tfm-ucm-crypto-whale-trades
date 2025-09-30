@@ -484,15 +484,30 @@ except Exception as e:
 
 # COMMAND ----------
 
-# Celda 5 — Reempacar el Pipeline Spark a pyfunc (CORREGIDA: sin try, std/mean como atributos)
+# Celda 5 — Reempacar el Pipeline Spark a pyfunc (con limpieza para reiniciar a v1)
 import numpy as np
 import pandas as pd
 import mlflow
 import mlflow.pyfunc
 from pyspark.ml import PipelineModel
+from mlflow.tracking import MlflowClient
+from mlflow.models import infer_signature
 
 TARGET_REGISTERED_MODEL = REGISTERED_MODEL_NAME + "_pyfunc"
 mlflow.set_registry_uri("databricks-uc")
+mlflow.set_tracking_uri("databricks")
+
+# === Limpieza previa: elimina TODAS las versiones y el modelo registrado (para volver a v1) ===
+_client = MlflowClient()
+try:
+    for v in _client.search_model_versions(f"name = '{TARGET_REGISTERED_MODEL}'"):
+        try:
+            _client.delete_model_version(name=TARGET_REGISTERED_MODEL, version=v.version)
+        except Exception:
+            pass
+    _client.delete_registered_model(name=TARGET_REGISTERED_MODEL)
+except Exception:
+    pass
 
 # Pipeline entrenado con umbral embebido de la Celda 3
 pm: PipelineModel = tuned_pipe_model
@@ -590,11 +605,10 @@ py_model = LRWithStandardization(
 
 # Firma y requisitos
 input_example = train_df.select(*assembler_cols).limit(1).toPandas()
-from mlflow.models import infer_signature
 signature = infer_signature(input_example, pd.DataFrame({"prediction":[0.0], "probability":[[0.5,0.5]]}))
 pip_reqs = ["mlflow==3.1.1", "pandas>=2.1,<2.3", "numpy>=1.24,<2.0"]
 
-# Log & Register en UC
+# Log & Register en UC (tras la limpieza, este alta será v1)
 with mlflow.start_run(run_name=f"repack_to_pyfunc_y{H}", nested=True):
     mlflow.set_tag("source_registered_model", REGISTERED_MODEL_NAME)
     mlflow.set_tag("repacked_flavor", "pyfunc_no_spark")
@@ -608,4 +622,51 @@ with mlflow.start_run(run_name=f"repack_to_pyfunc_y{H}", nested=True):
         pip_requirements=pip_reqs
     )
 
-print("OK → Registrado como:", TARGET_REGISTERED_MODEL)
+print("OK → Registrado como:", TARGET_REGISTERED_MODEL, "(v1)")
+
+
+# COMMAND ----------
+
+import os
+from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+from azure.core.credentials import AccessToken
+
+# --- Configuración ---
+SUBSCRIPTION_ID = "b9c75d1a-b9c6-4b39-9a81-2d73d5a3cd22"   # tu sub ID
+RESOURCE_GROUP  = "tfmprod-jpn"                            # RG donde está el ACI
+ACI_NAME        = "predictor-ws"                           # nombre del container group
+
+# --- Clase para usar un token directamente ---
+class StaticTokenCredential:
+    def __init__(self, token):
+        self._token = token
+    def get_token(self, *scopes):
+        return AccessToken(self._token, float("inf"))
+
+# --- Coge el token desde la variable de entorno del clúster ---
+bearer_token = os.environ.get("AZURE_BEARER_TOKEN")
+if not bearer_token:
+    raise ValueError("No se encontró la variable AZURE_BEARER_TOKEN en el entorno del clúster")
+
+# --- Inicializa cliente ACI ---
+cred = StaticTokenCredential(bearer_token)
+aci_client = ContainerInstanceManagementClient(cred, SUBSCRIPTION_ID)
+
+# --- Reinicia el contenedor (equivale a arrancarlo) ---
+aci_client.container_groups.begin_start(RESOURCE_GROUP, ACI_NAME)
+
+'''.result()
+
+# --- Consulta estado e IP ---
+cg = aci_client.container_groups.get(RESOURCE_GROUP, ACI_NAME)
+state = getattr(getattr(cg, "instance_view", None), "state", None)
+ip    = getattr(getattr(cg, "ip_address", None), "ip", None)
+fqdn  = getattr(getattr(cg, "ip_address", None), "fqdn", None)
+
+print(f"✅ Contenedor reiniciado. Estado: {state}, IP: {ip}, FQDN: {fqdn}")
+
+# --- (Opcional) Ver logs del primer contenedor ---
+cname = cg.containers[0].name
+logs = aci_client.containers.list_logs(RESOURCE_GROUP, ACI_NAME, cname, tail=50)
+print("\n--- Últimos logs ---\n", logs.content or "<sin logs>")
+'''

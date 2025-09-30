@@ -3,7 +3,7 @@ from pyspark.sql import functions as F, Window as W
 
 # COMMAND ----------
 
-# Tabla bronze con los trades ya ingeridos (del paso 1)
+# Ubicaciones para lectura y escritura
 BRONZE_PATH  = "abfss://datalake@statfmprod.dfs.core.windows.net/bronze/tradesv2"
 BRONZE_TABLE = "dbrtfmprod.whale_trades.bronze__top_kyles_all_trades"
 TABLE_BRONZE__TOP_ALL_TRADES = 'bronze__top_kyles_all_trades'
@@ -137,7 +137,7 @@ LOCATION '{SILVER_PATH}'
 # COMMAND ----------
 
 # Checks de salud de los datos
-print("bad_mid:", full.filter((F.col("mid").isNull()) | (F.col("mid") <= 0)).count())
+'''print("bad_mid:", full.filter((F.col("mid").isNull()) | (F.col("mid") <= 0)).count())
 print("bad_price_1s:", full.filter((F.col("price_1s").isNull()) | (F.col("price_1s") <= 0)).count())
 print("neg_vol_base:", full.filter(F.col("vol_base_1s") < 0).count())
 
@@ -167,4 +167,4 @@ print("bad_price_when_no_trade:", full.filter(
 
 print("bad_last_price_when_trade:", full.filter(
     (F.col("had_trade_1s") == 1) & (F.col("last_price_1s").isNull())
-).count())
+).count())'''

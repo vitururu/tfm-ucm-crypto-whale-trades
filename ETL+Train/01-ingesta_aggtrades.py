@@ -28,9 +28,8 @@ NUM_RETRIES     = 30
 top_kyles_crypto = spark.sql(f"""
     SELECT symbol
     FROM {GOLD_TABLE_WITH_SCORES}
-    WHERE interesting IS TRUE
-    AND analyzed IS False
-    ORDER BY score_final DESC;
+    ORDER BY score_final DESC
+    LIMIT 1;
 """
 )
 

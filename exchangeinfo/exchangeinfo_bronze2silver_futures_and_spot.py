@@ -41,11 +41,27 @@ df_okx = (
         F.split(F.col("item.instId"), "-").getItem(1).alias("quote_coin"),
         F.col("item.settleCcy").alias("settlement_coin"),
         F.col("item.state").alias("status"),
-        F.col("item.lever").cast("double").alias("max_leverage"),
-        F.col("item.tickSz").cast("double").alias("tick_size"),
-        F.col("item.lotSz").cast("double").alias("step_size"),
-        F.col("item.minSz").cast("double").alias("min_order_qty"),
-        F.col("item.maxLmtSz").cast("double").alias("max_order_qty"),
+
+        F.when(F.col("item.lever") == "", F.lit(None))
+         .otherwise(F.col("item.lever").cast("double"))
+         .alias("max_leverage"),
+
+        F.when(F.col("item.tickSz") == "", F.lit(None))
+         .otherwise(F.col("item.tickSz").cast("double"))
+         .alias("tick_size"),
+
+        F.when(F.col("item.lotSz") == "", F.lit(None))
+         .otherwise(F.col("item.lotSz").cast("double"))
+         .alias("step_size"),
+
+        F.when(F.col("item.minSz") == "", F.lit(None))
+         .otherwise(F.col("item.minSz").cast("double"))
+         .alias("min_order_qty"),
+
+        F.when(F.col("item.maxLmtSz") == "", F.lit(None))
+         .otherwise(F.col("item.maxLmtSz").cast("double"))
+         .alias("max_order_qty"),
+
         F.from_unixtime((F.col("item.listTime") / 1000).cast("long")).alias("listed_at"),
         F.col("_ingested_at"),
         F.lit(processed_at).alias("processed_at"),
@@ -53,6 +69,7 @@ df_okx = (
         F.lit("okx").alias("exchange"),
     )
 )
+
 
 df_okx = (
     df_okx
@@ -143,13 +160,15 @@ df_bybit = df_bybit.withColumn(
 # COMMAND ----------
 
 import traceback
+from pyspark.sql import functions as F
 
 try:
     # -------------------
     # UNIÓN Y ESCRITURA
     # -------------------
+
     df_combined = df_binance.unionByName(df_bybit).unionByName(df_okx)
-    
+
     def overwrite_to_silver(batch_df, batch_id):
         (
             batch_df.write
@@ -173,7 +192,8 @@ try:
 except Exception as e:
     print("❌ Error dentro de overwrite_to_silver():")
     traceback.print_exc()
-    raise e 
+    raise e
+
 
 # COMMAND ----------
 
@@ -206,13 +226,23 @@ df_okx = (
         F.col("item.baseCcy").alias("base_coin"),
         F.col("item.quoteCcy").alias("quote_coin"),
         F.col("item.state").alias("status"),
-        F.col("item.minSz").cast("double").alias("min_order_qty"),
-        F.col("item.maxLmtSz").cast("double").alias("max_order_qty"),
-        F.col("item.tickSz").cast("double").alias("tick_size"),
+
+        F.when(F.col("item.minSz") == "", F.lit(None))
+         .otherwise(F.col("item.minSz").cast("double"))
+         .alias("min_order_qty"),
+
+        F.when(F.col("item.maxLmtSz") == "", F.lit(None))
+         .otherwise(F.col("item.maxLmtSz").cast("double"))
+         .alias("max_order_qty"),
+
+        F.when(F.col("item.tickSz") == "", F.lit(None))
+         .otherwise(F.col("item.tickSz").cast("double"))
+         .alias("tick_size"),
+
         F.col("_ingested_at"),
         F.lit(processed_at).alias("processed_at"),
-
-).withColumn("exchange", F.lit("okx"))
+    )
+    .withColumn("exchange", F.lit("okx"))
 )
 
 df_okx = (
@@ -220,6 +250,7 @@ df_okx = (
         .withColumn("status",F.when(df_okx["status"] != "live", "break").otherwise(df_okx["status"]))
         .withColumn("symbol", F.concat_ws("-", "base_coin", "quote_coin"))
 )
+display(df_okx)
 
 # COMMAND ----------
 
@@ -256,6 +287,7 @@ df_binance = (
         .withColumn("symbol", F.concat_ws("-", "base_coin", "quote_coin"))
 
 )
+display(df_binance)
 
 # COMMAND ----------
 
@@ -291,6 +323,8 @@ df_bybit = (
         .withColumn("symbol", F.concat_ws("-", "base_coin", "quote_coin"))
 )
 
+display(df_bybit)
+
 # COMMAND ----------
 
 import traceback
@@ -299,6 +333,7 @@ try:
     # -------------------
     # UNIÓN Y ESCRITURA
     # -------------------
+
     df_combined = df_binance.unionByName(df_bybit).unionByName(df_okx)
 
     def overwrite_to_silver(batch_df, batch_id):
@@ -324,7 +359,7 @@ try:
 except Exception as e:
     print("❌ Error dentro de overwrite_to_silver():")
     traceback.print_exc()
-    raise e  # para que Spark lo capture también
+    raise e
 
 # COMMAND ----------
 

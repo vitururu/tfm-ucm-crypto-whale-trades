@@ -148,7 +148,7 @@ except Exception as e:
 # COMMAND ----------
 
 # Celda 8 — QA de features (cobertura y consistencia)
-feat = spark.table(FEAT_TABLE).cache()
+'''feat = spark.table(FEAT_TABLE).cache()
 base = spark.table(BASE_TABLE).select("symbol","ts")  # para comparar cobertura
 
 # 1) Cobertura
@@ -205,4 +205,4 @@ display(
 )
 
 display(feat.orderBy(F.asc("symbol"), F.desc("ts")).limit(30))
-feat.unpersist()
+feat.unpersist()'''
